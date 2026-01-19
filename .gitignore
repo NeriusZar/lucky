@@ -6,3 +6,6 @@
 
 !*.go
 !*.mod
+
+# ...even if they are in subdirectories
+!*/
