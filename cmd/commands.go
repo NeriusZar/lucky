@@ -1,11 +1,9 @@
 package cmd
 
-import "github.com/NeriusZar/lucky/internal/meteoapi"
-
 type command struct {
 	name        string
 	description string
-	callback    func(meteoapi.ApiClient, ...string) error
+	callback    func(*Config, ...string) error
 }
 
 func getListOfCommands() map[string]command {
@@ -24,6 +22,16 @@ func getListOfCommands() map[string]command {
 			name:        "current",
 			description: "Retrieves latest information about current weather conditions in a specific area",
 			callback:    current,
+		},
+		"add_location": {
+			name:        "add_location",
+			description: "Adds a new location to the database",
+			callback:    addLocation,
+		},
+		"locations": {
+			name:        "locations",
+			description: "Displays a list of all added locations",
+			callback:    locations,
 		},
 	}
 }

@@ -4,14 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-
-	"github.com/NeriusZar/lucky/internal/meteoapi"
 )
 
 func StartRepl() {
 	scanner := bufio.NewScanner(os.Stdin)
 	commands := getListOfCommands()
-	api := meteoapi.NewApiClient()
+	config := NewConfig()
 
 	fmt.Println("Welcome to Lucky - your fishing luck detector.")
 	for {
@@ -29,7 +27,7 @@ func StartRepl() {
 			continue
 		}
 
-		if err := command.callback(api, input[1:]...); err != nil {
+		if err := command.callback(&config, input[1:]...); err != nil {
 			fmt.Printf("Failed to execute command %s", commandName)
 			continue
 		}
