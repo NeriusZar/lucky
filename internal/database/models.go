@@ -24,9 +24,9 @@ type WeatherLog struct {
 	ID          uuid.UUID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Temperature sql.NullString
-	WindSpeed   sql.NullString
+	Temperature sql.NullFloat64
+	WindSpeed   sql.NullFloat64
 	CloudCover  sql.NullInt32
-	Preassure   sql.NullString
+	Preassure   sql.NullFloat64
 	LocationID  uuid.UUID
 }

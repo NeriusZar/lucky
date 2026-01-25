@@ -20,10 +20,10 @@ RETURNING id, created_at, updated_at, temperature, wind_speed, cloud_cover, prea
 
 type CreateWeatherLogParams struct {
 	ID          uuid.UUID
-	Temperature sql.NullString
-	WindSpeed   sql.NullString
+	Temperature sql.NullFloat64
+	WindSpeed   sql.NullFloat64
 	CloudCover  sql.NullInt32
-	Preassure   sql.NullString
+	Preassure   sql.NullFloat64
 	LocationID  uuid.UUID
 }
 
