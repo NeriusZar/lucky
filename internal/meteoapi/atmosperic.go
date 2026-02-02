@@ -1,6 +1,7 @@
 package meteoapi
 
 import (
+	"strings"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -52,14 +53,14 @@ func getWeatherVariables() string {
 		"pressure_msl",
 	}
 
-	result := ""
+	var result strings.Builder
 	for i, v := range variables {
 		if i == len(variables)-1 {
-			result += v
+			result.WriteString(v)
 			break
 		}
-		result += fmt.Sprintf("%s,", v)
+		result.WriteString(fmt.Sprintf("%s,", v))
 	}
 
-	return result
+	return result.String()
 }
