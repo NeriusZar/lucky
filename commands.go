@@ -18,6 +18,8 @@ func supportedCommands() commands {
 	return commands{
 		registered: map[string]func(context.Context, *config, command) error{
 			"collect": collectWeahterLogs,
+			"add": addLocation,
+			"locations": locations,
 		},
 	}
 }

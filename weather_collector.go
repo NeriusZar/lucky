@@ -15,7 +15,7 @@ import (
 
 func collectWeahterLogs(ctx context.Context, c *config, cmd command) error {
 	collectCmd := flag.NewFlagSet(cmd.Name, flag.ExitOnError)
-	outputFilePath := collectCmd.String("out", "/tmp/collect.log", "redirects output to the provided file")
+	outputFilePath := collectCmd.String("out", "", "redirects output to the provided file")
 	tick := collectCmd.Duration("tick", time.Second*60, "overrides default tick duration for weather data collection")
 	help := collectCmd.Bool("help", false, "gives instructions about the collect command")
 
@@ -23,14 +23,14 @@ func collectWeahterLogs(ctx context.Context, c *config, cmd command) error {
 		return fmt.Errorf("failed to parse flags %v", err)
 	}
 
-	if *help {
+	if help != nil && *help {
 		fmt.Printf("usage: collect [-out] [-tick]\n")
 		return nil
 	}
 
 	log.SetOutput(os.Stdout)
 
-	if outputFilePath != nil {
+	if outputFilePath != nil && *outputFilePath != "" {
 		filePath := filepath.Join(*outputFilePath)
 		file, err := os.Create(filePath)
 		if err != nil {

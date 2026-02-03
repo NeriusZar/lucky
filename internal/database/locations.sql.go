@@ -7,30 +7,22 @@ package database
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const createLocation = `-- name: CreateLocation :one
 INSERT INTO locations (id, created_at, updated_at, name, latitude, longitude)
-VALUES ($1, now(), now(), $2, $3, $4)
+VALUES (gen_random_uuid(), now(), now(), $1, $2, $3)
 RETURNING id, created_at, updated_at, name, latitude, longitude
 `
 
 type CreateLocationParams struct {
-	ID        uuid.UUID
 	Name      string
 	Latitude  float64
 	Longitude float64
 }
 
 func (q *Queries) CreateLocation(ctx context.Context, arg CreateLocationParams) (Location, error) {
-	row := q.db.QueryRowContext(ctx, createLocation,
-		arg.ID,
-		arg.Name,
-		arg.Latitude,
-		arg.Longitude,
-	)
+	row := q.db.QueryRowContext(ctx, createLocation, arg.Name, arg.Latitude, arg.Longitude)
 	var i Location
 	err := row.Scan(
 		&i.ID,
