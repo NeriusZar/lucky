@@ -33,10 +33,5 @@ func getListOfCommands() map[string]command {
 			description: "Displays a list of all added locations",
 			callback:    locations,
 		},
-		"collect_weather_logs": {
-			name: "collect_weather_logs",
-			description: "",
-			callback: collectWeatherLogs,
-		},
 	}
 }

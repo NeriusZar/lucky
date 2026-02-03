@@ -14,12 +14,11 @@ import (
 
 const createWeatherLog = `-- name: CreateWeatherLog :one
 INSERT INTO weather_logs (id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id)
-VALUES ($1, now(), now(), $2, $3, $4, $5, $6)
+VALUES (gen_random_uuid(), now(), now(), $1, $2, $3, $4, $5)
 RETURNING id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id
 `
 
 type CreateWeatherLogParams struct {
-	ID          uuid.UUID
 	Temperature sql.NullFloat64
 	WindSpeed   sql.NullFloat64
 	CloudCover  sql.NullInt32
@@ -29,7 +28,6 @@ type CreateWeatherLogParams struct {
 
 func (q *Queries) CreateWeatherLog(ctx context.Context, arg CreateWeatherLogParams) (WeatherLog, error) {
 	row := q.db.QueryRowContext(ctx, createWeatherLog,
-		arg.ID,
 		arg.Temperature,
 		arg.WindSpeed,
 		arg.CloudCover,

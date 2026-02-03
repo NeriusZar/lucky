@@ -1,14 +1,15 @@
 package meteoapi
 
 import (
-	"strings"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-func (api ApiClient) GetCurrentAtmosphericData(lat, long float64) (CurrentWeatherResponse, error) {
+func (api ApiClient) GetCurrentAtmosphericData(ctx context.Context, lat, long float64) (CurrentWeatherResponse, error) {
 	u, err := url.Parse(baseUrl + forecasePath)
 	if err != nil {
 		return CurrentWeatherResponse{}, err
@@ -21,7 +22,7 @@ func (api ApiClient) GetCurrentAtmosphericData(lat, long float64) (CurrentWeathe
 	q.Add("wind_speed_unit", "ms")
 	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 
 	if err != nil {
 		return CurrentWeatherResponse{}, err
