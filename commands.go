@@ -20,6 +20,7 @@ func supportedCommands() commands {
 			"collect": collectWeahterLogs,
 			"add": addLocation,
 			"locations": locations,
+			"hscore": historicalScore,
 		},
 	}
 }

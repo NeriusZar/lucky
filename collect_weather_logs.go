@@ -24,7 +24,7 @@ func collectWeahterLogs(ctx context.Context, c *config, cmd command) error {
 	}
 
 	if help != nil && *help {
-		fmt.Printf("usage: collect [-out] [-tick]\n")
+		fmt.Printf("usage: collect [--out] [--tick]\n")
 		return nil
 	}
 

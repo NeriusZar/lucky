@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -24,7 +25,7 @@ func addLocation(ctx context.Context, c *config, cmd command) error {
 	}
 
 	if len(cmd.Args) != 3 {
-		return fmt.Errorf("not enough arguments provided")
+		return errors.New("not enough arguments provided")
 	}
 
 	name := cmd.Args[0]
