@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -46,6 +47,110 @@ func (q *Queries) CreateWeatherLog(ctx context.Context, arg CreateWeatherLogPara
 		&i.LocationID,
 	)
 	return i, err
+}
+
+const getDailyLogsWithinRange = `-- name: GetDailyLogsWithinRange :many
+SELECT AVG(temperature) as temperature, AVG(wind_speed) as speed, AVG(cloud_cover) as cloud_cover, AVG(preassure) as preassure, date_trunc('day', updated_at)::timestamp AS daily_bucket
+FROM weather_logs
+WHERE location_id = $1::uuid
+AND updated_at >= $2::timestamp
+AND updated_at <= $3::timestamp
+GROUP BY daily_bucket
+`
+
+type GetDailyLogsWithinRangeParams struct {
+	ID         uuid.UUID
+	RangeStart time.Time
+	RangeEnd   time.Time
+}
+
+type GetDailyLogsWithinRangeRow struct {
+	Temperature float64
+	Speed       float64
+	CloudCover  float64
+	Preassure   float64
+	DailyBucket time.Time
+}
+
+func (q *Queries) GetDailyLogsWithinRange(ctx context.Context, arg GetDailyLogsWithinRangeParams) ([]GetDailyLogsWithinRangeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDailyLogsWithinRange, arg.ID, arg.RangeStart, arg.RangeEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDailyLogsWithinRangeRow
+	for rows.Next() {
+		var i GetDailyLogsWithinRangeRow
+		if err := rows.Scan(
+			&i.Temperature,
+			&i.Speed,
+			&i.CloudCover,
+			&i.Preassure,
+			&i.DailyBucket,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getHourlyLogsWithinRange = `-- name: GetHourlyLogsWithinRange :many
+SELECT AVG(temperature) as temperature, AVG(wind_speed) as speed, AVG(cloud_cover) as cloud_cover, AVG(preassure) as preassure, date_trunc('hour', updated_at)::timestamp AS hourly_bucket
+FROM weather_logs
+WHERE location_id = $1::uuid
+AND updated_at >= $2::timestamp
+AND updated_at <= $3::timestamp
+GROUP BY hourly_bucket
+`
+
+type GetHourlyLogsWithinRangeParams struct {
+	ID         uuid.UUID
+	RangeStart time.Time
+	RangeEnd   time.Time
+}
+
+type GetHourlyLogsWithinRangeRow struct {
+	Temperature  float64
+	Speed        float64
+	CloudCover   float64
+	Preassure    float64
+	HourlyBucket time.Time
+}
+
+func (q *Queries) GetHourlyLogsWithinRange(ctx context.Context, arg GetHourlyLogsWithinRangeParams) ([]GetHourlyLogsWithinRangeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getHourlyLogsWithinRange, arg.ID, arg.RangeStart, arg.RangeEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetHourlyLogsWithinRangeRow
+	for rows.Next() {
+		var i GetHourlyLogsWithinRangeRow
+		if err := rows.Scan(
+			&i.Temperature,
+			&i.Speed,
+			&i.CloudCover,
+			&i.Preassure,
+			&i.HourlyBucket,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getWeatherLogsByLocation = `-- name: GetWeatherLogsByLocation :many

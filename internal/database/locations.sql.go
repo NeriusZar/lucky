@@ -68,3 +68,21 @@ func (q *Queries) GetAllLocations(ctx context.Context) ([]Location, error) {
 	}
 	return items, nil
 }
+
+const getLocationByName = `-- name: GetLocationByName :one
+SELECT id, created_at, updated_at, name, latitude, longitude FROM locations WHERE name = $1
+`
+
+func (q *Queries) GetLocationByName(ctx context.Context, name string) (Location, error) {
+	row := q.db.QueryRowContext(ctx, getLocationByName, name)
+	var i Location
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Latitude,
+		&i.Longitude,
+	)
+	return i, err
+}

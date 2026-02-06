@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NeriusZar/lucky/internal/luck"
+	"github.com/NeriusZar/lucky/internal/utils"
 )
 
 func historicalScore(ctx context.Context, c *config, cmd command) error {
@@ -28,22 +28,35 @@ func historicalScore(ctx context.Context, c *config, cmd command) error {
 		return errors.New("not enough arguments provided")
 	}
 
-	location := cmd.Args[0]
+	locationName := cmd.Args[0]
 
 	if daysCount == nil || *daysCount == 0 {
 		return errors.New("invalid days parameter value. You can only provide values in range [1, 30]")
 	}
-	daysDuration := time.Duration(*daysCount) * time.Hour * 24
 	to := time.Now()
-	from := to.Add(-daysDuration)
+	from := utils.GetXDaysBack(*daysCount, to)
 
-	results, err := luck.DetermineLuck(ctx, location, from, to)
+	location, err := c.db.GetLocationByName(ctx, locationName)
+	if err != nil {
+		return fmt.Errorf("Failed to get location with specified name. %v", err)
+	}
+
+	results, err := c.lc.DetermineLuck(ctx, location.ID, from, to)
 	if err != nil {
 		return err
 	}
 
 	if len(results) == 0 {
-		return fmt.Errorf("Failed to gather any luck predictions for time period from %s to %s", from.Format("2006-02-10"), to.Format("2006-02-10"))
+		return fmt.Errorf("Failed to gather any luck predictions for time period from %v to %v", from.Format(time.RFC3339), to.Format(time.RFC3339))
+	}
+
+	fmt.Printf("Fishing luck analysis for %s:\n", locationName)
+	for _, luck := range results {
+		fmt.Printf("Time: %s \n", luck.Timestamp.Format(time.DateTime))
+		fmt.Printf("Luck score: %v\n", luck.Score)
+		fmt.Printf("Confidence: %v\n", luck.Confidence)
+		fmt.Printf("Factors included: %v\n", luck.FactorCount)
+		fmt.Println("----------------------------------")
 	}
 
 	return nil

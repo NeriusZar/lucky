@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/NeriusZar/lucky/internal/database"
+	"github.com/NeriusZar/lucky/internal/luck"
 	"github.com/NeriusZar/lucky/internal/meteoapi"
 	_ "github.com/lib/pq"
 )
@@ -16,6 +17,7 @@ type config struct {
 	tick time.Duration
 	api  *meteoapi.ApiClient
 	db   *database.Queries
+	lc   luck.LuckCalculator
 }
 
 func (c *config) init() error {
@@ -40,10 +42,12 @@ func (c *config) init() error {
 	dbQueries := database.New(db)
 
 	api := meteoapi.NewApiClient()
+	lc := luck.NewLuckCalculator(dbQueries)
 	defaultTick := time.Duration(defaultTickInSeconds) * time.Second
 	c.tick = defaultTick
 	c.api = &api
 	c.db = dbQueries
+	c.lc = lc
 
 	return nil
 }
