@@ -16,7 +16,7 @@ import (
 const createWeatherLog = `-- name: CreateWeatherLog :one
 INSERT INTO weather_logs (id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id)
 VALUES (gen_random_uuid(), now(), now(), $1, $2, $3, $4, $5)
-RETURNING id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id
+RETURNING id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id, is_debug
 `
 
 type CreateWeatherLogParams struct {
@@ -45,6 +45,46 @@ func (q *Queries) CreateWeatherLog(ctx context.Context, arg CreateWeatherLogPara
 		&i.CloudCover,
 		&i.Preassure,
 		&i.LocationID,
+		&i.IsDebug,
+	)
+	return i, err
+}
+
+const createWeatherLogDebug = `-- name: CreateWeatherLogDebug :one
+INSERT INTO weather_logs (id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id, is_debug)
+VALUES (gen_random_uuid(), now(), $6, $1, $2, $3, $4, $5, true)
+RETURNING id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id, is_debug
+`
+
+type CreateWeatherLogDebugParams struct {
+	Temperature sql.NullFloat64
+	WindSpeed   sql.NullFloat64
+	CloudCover  sql.NullInt32
+	Preassure   sql.NullFloat64
+	LocationID  uuid.UUID
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) CreateWeatherLogDebug(ctx context.Context, arg CreateWeatherLogDebugParams) (WeatherLog, error) {
+	row := q.db.QueryRowContext(ctx, createWeatherLogDebug,
+		arg.Temperature,
+		arg.WindSpeed,
+		arg.CloudCover,
+		arg.Preassure,
+		arg.LocationID,
+		arg.UpdatedAt,
+	)
+	var i WeatherLog
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Temperature,
+		&i.WindSpeed,
+		&i.CloudCover,
+		&i.Preassure,
+		&i.LocationID,
+		&i.IsDebug,
 	)
 	return i, err
 }
@@ -56,6 +96,7 @@ WHERE location_id = $1::uuid
 AND updated_at >= $2::timestamp
 AND updated_at <= $3::timestamp
 GROUP BY daily_bucket
+ORDER BY daily_bucket
 `
 
 type GetDailyLogsWithinRangeParams struct {
@@ -108,6 +149,7 @@ WHERE location_id = $1::uuid
 AND updated_at >= $2::timestamp
 AND updated_at <= $3::timestamp
 GROUP BY hourly_bucket
+ORDER BY hourly_bucket
 `
 
 type GetHourlyLogsWithinRangeParams struct {
@@ -154,7 +196,7 @@ func (q *Queries) GetHourlyLogsWithinRange(ctx context.Context, arg GetHourlyLog
 }
 
 const getWeatherLogsByLocation = `-- name: GetWeatherLogsByLocation :many
-SELECT id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id from weather_logs
+SELECT id, created_at, updated_at, temperature, wind_speed, cloud_cover, preassure, location_id, is_debug from weather_logs
 where location_id = $1
 limit $2
 `
@@ -182,6 +224,7 @@ func (q *Queries) GetWeatherLogsByLocation(ctx context.Context, arg GetWeatherLo
 			&i.CloudCover,
 			&i.Preassure,
 			&i.LocationID,
+			&i.IsDebug,
 		); err != nil {
 			return nil, err
 		}
@@ -194,4 +237,13 @@ func (q *Queries) GetWeatherLogsByLocation(ctx context.Context, arg GetWeatherLo
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeDebugLogs = `-- name: RemoveDebugLogs :exec
+DELETE FROM weather_logs WHERE is_debug = true
+`
+
+func (q *Queries) RemoveDebugLogs(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, removeDebugLogs)
+	return err
 }

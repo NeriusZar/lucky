@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,8 +38,12 @@ const (
 	hourly FactorDataInterval = 2
 )
 
-func (lc LuckCalculator) DetermineLuck(ctx context.Context, locationId uuid.UUID, from, to time.Time) ([]LuckResult, error) {
-	factorData, err := lc.getDataForPeriod(ctx, locationId, from, to, hourly)
+func (lc LuckCalculator) DetermineLuck(ctx context.Context, locationId uuid.UUID, from, to time.Time, isDaily bool) ([]LuckResult, error) {
+	interval := hourly
+	if isDaily {
+		interval = daily
+	}
+	factorData, err := lc.getDataForPeriod(ctx, locationId, from, to, interval)
 	if err != nil {
 		return nil, fmt.Errorf("failed to gather luck factor data. %v", err)
 	}
@@ -68,13 +73,15 @@ func (lc LuckCalculator) snapshotScore(snap FactorData, locationId uuid.UUID) (L
 				return LuckResult{}, nil
 			}
 		}
-
-		weightedScore = score * f.Weight()
+		weightedScore += (score * f.Weight())
 		availableWeight += f.Weight()
 	}
 
-	finalScore := (weightedScore / availableWeight) * 100
-	confidence := (availableWeight / totalWeight) * 100
+	var finalScore, confidence float64
+	if availableWeight != 0 && totalWeight != 0 {
+		finalScore = math.Round((weightedScore / availableWeight) * 100)
+		confidence = math.Round((availableWeight / totalWeight) * 100)
+	}
 
 	return LuckResult{
 		Score:       finalScore,
@@ -99,12 +106,13 @@ func (lc LuckCalculator) getDataForPeriod(ctx context.Context, locationId uuid.U
 
 		results := make([]FactorData, 0, len(dailyLogs))
 		for _, dl := range dailyLogs {
+			cloudCover := int(dl.CloudCover)
 			results = append(results, FactorData{
 				Timestamp:     dl.DailyBucket,
-				WindSpeed10M:  dl.Speed,
-				Temperature2M: dl.Temperature,
-				PressureMsl:   dl.Preassure,
-				CloudCover:    int(dl.CloudCover),
+				WindSpeed10M:  &dl.Speed,
+				Temperature2M: &dl.Temperature,
+				PressureMsl:   &dl.Preassure,
+				CloudCover:    &cloudCover,
 			})
 		}
 		return results, nil
@@ -120,16 +128,33 @@ func (lc LuckCalculator) getDataForPeriod(ctx context.Context, locationId uuid.U
 
 		results := make([]FactorData, 0, len(hourlyLogs))
 		for _, hl := range hourlyLogs {
+			cloudCover := int(hl.CloudCover)
 			results = append(results, FactorData{
 				Timestamp:     hl.HourlyBucket,
-				WindSpeed10M:  hl.Speed,
-				Temperature2M: hl.Temperature,
-				PressureMsl:   hl.Preassure,
-				CloudCover:    int(hl.CloudCover),
+				WindSpeed10M:  &hl.Speed,
+				Temperature2M: &hl.Temperature,
+				PressureMsl:   &hl.Preassure,
+				CloudCover:    &cloudCover,
 			})
 		}
+
+		populateHistoricalPreassure(results)
 		return results, nil
 	default:
 		return nil, errors.New("unsupported time interval type")
+	}
+}
+
+func populateHistoricalPreassure(snapshots []FactorData) {
+	snapMap := make(map[time.Time]FactorData)
+	for _, s := range snapshots {
+		snapMap[s.Timestamp] = s
+	}
+
+	for i := range snapshots {
+		targetTime := snapshots[i].Timestamp.Add(-(time.Hour * 3))
+		if tSnap, ok := snapMap[targetTime]; ok {
+			snapshots[i].PreassureMsl3hBefore = tSnap.PressureMsl
+		}
 	}
 }

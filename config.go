@@ -10,14 +10,16 @@ import (
 	"github.com/NeriusZar/lucky/internal/database"
 	"github.com/NeriusZar/lucky/internal/luck"
 	"github.com/NeriusZar/lucky/internal/meteoapi"
+	"github.com/NeriusZar/lucky/internal/mocks"
 	_ "github.com/lib/pq"
 )
 
 type config struct {
-	tick time.Duration
-	api  *meteoapi.ApiClient
-	db   *database.Queries
-	lc   luck.LuckCalculator
+	tick    time.Duration
+	api     *meteoapi.ApiClient
+	db      *database.Queries
+	lc      luck.LuckCalculator
+	dbMocks *mocks.DbMocks
 }
 
 func (c *config) init() error {
@@ -41,6 +43,7 @@ func (c *config) init() error {
 	}
 	dbQueries := database.New(db)
 
+	dbMocks := mocks.NewDbMocks(dbQueries)
 	api := meteoapi.NewApiClient()
 	lc := luck.NewLuckCalculator(dbQueries)
 	defaultTick := time.Duration(defaultTickInSeconds) * time.Second
@@ -48,6 +51,7 @@ func (c *config) init() error {
 	c.api = &api
 	c.db = dbQueries
 	c.lc = lc
+	c.dbMocks = &dbMocks
 
 	return nil
 }

@@ -17,10 +17,11 @@ type command struct {
 func supportedCommands() commands {
 	return commands{
 		registered: map[string]func(context.Context, *config, command) error{
-			"collect": collectWeahterLogs,
-			"add": addLocation,
+			"collect":   collectWeahterLogs,
+			"add":       addLocation,
 			"locations": locations,
-			"hscore": historicalScore,
+			"hscore":    historicalScore,
+			"backfill":  backfill,
 		},
 	}
 }

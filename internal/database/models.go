@@ -29,4 +29,5 @@ type WeatherLog struct {
 	CloudCover  sql.NullInt32
 	Preassure   sql.NullFloat64
 	LocationID  uuid.UUID
+	IsDebug     bool
 }

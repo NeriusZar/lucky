@@ -11,11 +11,12 @@ type Factor interface {
 }
 
 type FactorData struct {
-	Timestamp     time.Time
-	Temperature2M float64
-	WindSpeed10M  float64
-	CloudCover    int
-	PressureMsl   float64
+	Timestamp            time.Time
+	Temperature2M        *float64
+	WindSpeed10M         *float64
+	CloudCover           *int
+	PressureMsl          *float64
+	PreassureMsl3hBefore *float64
 }
 
 var ErrNoDataForFactor = errors.New("No data provided for the score calculations")

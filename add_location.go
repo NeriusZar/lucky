@@ -20,20 +20,21 @@ func addLocation(ctx context.Context, c *config, cmd command) error {
 	}
 
 	if help != nil && *help {
-		fmt.Println("usage: add <name> <latitude> <longitude>")
+		fmt.Println("usage: add <NAME> <LATITUDE> <LONGITUDE>")
 		return nil
 	}
 
-	if len(cmd.Args) != 3 {
+	args := addFlags.Args()
+	if len(args) != 3 {
 		return errors.New("not enough arguments provided")
 	}
 
-	name := cmd.Args[0]
-	lat, err := strconv.ParseFloat(cmd.Args[1], 64)
+	name := args[0]
+	lat, err := strconv.ParseFloat(args[1], 64)
 	if err != nil {
 		return fmt.Errorf("failed to parse latitude")
 	}
-	lon, err := strconv.ParseFloat(cmd.Args[2], 64)
+	lon, err := strconv.ParseFloat(args[2], 64)
 	if err != nil {
 		return fmt.Errorf("failed to parse longitude")
 	}
